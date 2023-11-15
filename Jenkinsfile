@@ -7,7 +7,7 @@ pipeline {
 
   parameters {
     string(name: 'container_name', defaultValue: 'pagina_web', description: 'Nombre del contenedor de docker.')
-    string(name: 'image_name', defaultValue: 'pagina_img', description: 'Nombre de la imagene docker.')
+    string(name: 'image_name', defaultValue: 'pagina_img', description: 'Nombre de la imagen docker.')
     string(name: 'tag_image', defaultValue: 'lts', description: 'Tag de la imagen de la página.')
     string(name: 'container_port', defaultValue: '80', description: 'Puerto que usa el contenedor')
   }
@@ -31,7 +31,7 @@ pipeline {
               sh 'docker rm ${container_name}'
               sh 'docker rmi ${image_name}:${tag_image}'
             } catch (Exception e) {
-              echo 'Exception occurred: ' + e.toString()
+              error 'Error al detener y eliminar contenedores antiguos o imágenes. Detalles: ' + e.toString()
             }
           }
           sh 'npm run build'
@@ -47,4 +47,13 @@ pipeline {
     }
   }
 
+  post {
+    success {
+      echo 'La aplicación se construyó y desplegó correctamente.'
+    }
+
+    failure {
+      echo 'Hubo un error en la construcción o despliegue de la aplicación.'
+    }
+  }
 }
