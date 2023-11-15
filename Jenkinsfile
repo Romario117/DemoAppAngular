@@ -16,7 +16,7 @@ pipeline {
     stage('install') {
       steps {
         git branch: 'master', url: 'https://github.com/Romario117/DemoAppAngular.git'
-        dir('/') {
+        dir('') {
           sh 'npm install'
         }
       }
@@ -24,7 +24,7 @@ pipeline {
 
 stage('build') {
     steps {
-        dir('/') {
+        dir('') {
             script {
                 try {
                     sh 'docker stop ${container_name}'
