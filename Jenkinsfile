@@ -1,52 +1,50 @@
 pipeline {
-    agent {
-        docker {
-            // Utiliza una imagen de Node.js como base
-            image 'node:18'
+  agent any
+
+  tools {
+    nodejs "NodeJS"
+  }
+
+  parameters {
+    string(name: 'container_name', defaultValue: 'pagina_web', description: 'Nombre del contenedor de docker.')
+    string(name: 'image_name', defaultValue: 'pagina_img', description: 'Nombre de la imagene docker.')
+    string(name: 'tag_image', defaultValue: 'lts', description: 'Tag de la imagen de la página.')
+    string(name: 'container_port', defaultValue: '80', description: 'Puerto que usa el contenedor')
+  }
+
+  stages {
+    stage('install') {
+      steps {
+        git branch: 'master', url: 'https://github.com/Romario117/DemoAppAngular.git'
+        dir('/') {
+          sh 'npm install'
         }
+      }
     }
 
-    stages {
-        stage('Instalar dependencias') {
-            steps {
-                // Instala las dependencias del proyecto Angular
-                sh 'npm install'
+    stage('build') {
+      steps {
+        dir('/') {
+          script {
+            try {
+              sh 'docker stop ${container_name}'
+              sh 'docker rm ${container_name}'
+              sh 'docker rmi ${image_name}:${tag_image}'
+            } catch (Exception e) {
+              echo 'Exception occurred: ' + e.toString()
             }
+          }
+          sh 'npm run build'
+          sh 'docker build -t ${image_name}:${tag_image} .'
         }
-
-        stage('Construir la aplicación') {
-            steps {
-                // Compila la aplicación Angular
-                sh 'npm run build --prod'
-            }
-        }
-
-        stage('Construir la imagen Docker') {
-            steps {
-                // Construye la imagen Docker
-                script {
-                    docker.build('my-angular-app')
-                }
-            }
-        }
-
-        stage('Desplegar en Docker') {
-            steps {
-                // Despliega la aplicación en un contenedor Docker
-                script {
-                    docker.image('my-angular-app').withRun('-p 8080:80')
-                }
-            }
-        }
+      }
     }
 
-    post {
-        success {
-            echo 'La aplicación se construyó y desplegó correctamente.'
-        }
-
-        failure {
-            echo 'Hubo un error en la construcción o despliegue de la aplicación.'
-        }
+    stage('deploy') {
+      steps {
+        sh 'docker run -d -p ${container_port}:80 --name ${container_name} ${image_name}:${tag_image}'
+      }
     }
+  }
+
 }
