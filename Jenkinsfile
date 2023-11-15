@@ -22,23 +22,24 @@ pipeline {
       }
     }
 
-    stage('build') {
-      steps {
+stage('build') {
+    steps {
         dir('/') {
-          script {
-            try {
-              sh 'docker stop ${container_name}'
-              sh 'docker rm ${container_name}'
-              sh 'docker rmi ${image_name}:${tag_image}'
-            } catch (Exception e) {
-              error 'Error al detener y eliminar contenedores antiguos o imágenes. Detalles: ' + e.toString()
+            script {
+                try {
+                    sh 'docker stop ${container_name}'
+                    sh 'docker rm ${container_name}'
+                    sh 'docker rmi ${image_name}:${tag_image}'
+                    sh 'npm run build'
+                    sh 'docker build -t ${image_name}:${tag_image} .'
+                } catch (Exception e) {
+                    error 'Error al detener y eliminar contenedores antiguos o imágenes, o al compilar la aplicación. Detalles: ' + e.toString()
+                }
             }
-          }
-          sh 'npm run build'
-          sh 'docker build -t ${image_name}:${tag_image} .'
         }
-      }
     }
+}
+
 
     stage('deploy') {
       steps {
